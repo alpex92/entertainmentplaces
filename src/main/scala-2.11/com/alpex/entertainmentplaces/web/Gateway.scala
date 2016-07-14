@@ -24,11 +24,11 @@ class Gateway(val config: Config)
   val httpClient = new HttpClient(config)
   val searchApi = new SearchService(httpClient.httpFlow, config)
 
-  val routes = path("search" / Rest) { what =>
+  val routes = path("search" / Segment) { what =>
     get {
       // TODO: Validate 'what'?
       onSuccess(searchApi.search(what)) { places =>
-        complete(places.toList)
+        complete(places)
       }
     }
   }

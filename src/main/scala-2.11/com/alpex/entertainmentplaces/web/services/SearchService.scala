@@ -30,7 +30,7 @@ class SearchService(val flow: HttpFlow, val config: Config)
     // Get places with max rating for each city
     val maxed = Future.sequence(cities.map(where => getPlaceWithMaxRatingForCity(what, where)))
     // Sort by rating descending
-    maxed.map(_.sortBy(_.rating))
+    maxed.map(_.sortBy(-_.rating))
   }
 
   protected def getPlaceWithMaxRatingForCity(what: String, city: String) = {
@@ -41,6 +41,9 @@ class SearchService(val flow: HttpFlow, val config: Config)
     placesApi.getPlaces(what, city).flatMap(getRatingForPlaces)
   }
 
-  protected def getRatingForPlaces(places: Seq[Place]) = Future.sequence(places.map(ratingApi.getRating))
+  protected def getRatingForPlaces(places: Seq[Place]) = {
+    // Flatten to discard places without rating
+    Future.sequence(places.map(ratingApi.getRating)).map(_.flatten)
+  }
 
 }

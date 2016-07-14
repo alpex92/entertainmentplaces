@@ -16,5 +16,5 @@ trait PlacesAPI {
 }
 
 trait RatingAPI {
-  def getRating(p: Place): Future[RatedPlace]
+  def getRating(p: Place): Future[Option[RatedPlace]]
 }

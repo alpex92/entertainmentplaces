@@ -10,6 +10,6 @@ import spray.json.DefaultJsonProtocol
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val placeFormat = jsonFormat4(Place)
   implicit val placesResponseFormat = jsonFormat1(PlacesResponse)
-  implicit val ratingResponseFormat = jsonFormat1(RatingResponse)
+  implicit val ratingResponseFormat = jsonFormat(RatingResponse, "city_name", "rating")
   implicit val ratedPlaceFormat = jsonFormat3(RatedPlace)
 }
