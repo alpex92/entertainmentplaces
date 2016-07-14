@@ -10,10 +10,9 @@ trait ApiUsage {
   def apiVersion: String
   def apiKey: String
 
-  def query(params: (String, String)*): Query = {
-    val query = Query("key" -> apiKey, "version" -> apiVersion)
-    params.foreach(p => query :+ p)
-    query
-  }
+  def defaultParams = Seq("key" -> apiKey, "version" -> apiVersion)
 
+  def query(params: (String, String)*): Query = {
+    Query((defaultParams ++ params).toMap)
+  }
 }

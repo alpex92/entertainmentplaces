@@ -20,7 +20,7 @@ class RatingService(val flow: HttpFlow, val apiKey: String, val apiVersion: Stri
                    (implicit val executionContext: ExecutionContext, implicit val materializer: Materializer)
   extends HttpClientService with ApiUsage with RatingAPI with JsonSupport {
 
-  override def getRating(p: Place): Future[RatedPlace] = {
+  override def getRating(p: Place): Future[Option[RatedPlace]] = {
 
     val params = query("id" -> p.id, "hash" -> p.hash)
     val uri = Uri("/profile").withQuery(params)
@@ -28,10 +28,18 @@ class RatingService(val flow: HttpFlow, val apiKey: String, val apiVersion: Stri
 
     startRequest(request).flatMap(response => response.status match {
       case OK =>
-        Unmarshal(response.entity).to[RatingResponse].map(rr => RatedPlace(p.name, p.address, rr.rating))
+        val ratingResponseFuture = Unmarshal(response.entity).to[RatingResponse]
+        ratingResponseFuture.map(r => makeRatedPlace(p, r))
       case _ =>
         Future.failed(new Exception("Ololo failed"))
     })
+  }
+
+  def makeRatedPlace(p: Place, ratingResponse: RatingResponse) = {
+    val city = ratingResponse.cityName
+    val address = p.address
+    val fullAddress = s"$city, $address"
+    ratingResponse.getRatingNum.map(rating => RatedPlace(p.name, fullAddress, rating))
   }
 
 }
