@@ -8,7 +8,7 @@ import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.RatingAPI
 import com.alpex.entertainmentplaces.model.{Place, RatedPlace, RatingResponse}
 import com.alpex.entertainmentplaces.util.JsonSupport
-import com.alpex.entertainmentplaces.web.ApiUsage
+import com.alpex.entertainmentplaces.web.{HttpClient, ApiUsage}
 import com.alpex.entertainmentplaces.web.HttpTransport.HttpFlow
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alpex on 14/07/16.
   */
-class RatingService(val flow: HttpFlow, val apiKey: String, val apiVersion: String)
+class RatingService(val client: HttpClient, val apiKey: String, val apiVersion: String)
                    (implicit val executionContext: ExecutionContext, implicit val materializer: Materializer)
   extends HttpClientService with ApiUsage with RatingAPI with JsonSupport {
 
@@ -35,11 +35,11 @@ class RatingService(val flow: HttpFlow, val apiKey: String, val apiVersion: Stri
     })
   }
 
-  def makeRatedPlace(p: Place, ratingResponse: RatingResponse) = {
+  protected def makeRatedPlace(p: Place, ratingResponse: RatingResponse) = {
     val city = ratingResponse.cityName
     val address = p.address
     val fullAddress = s"$city, $address"
-    ratingResponse.getRatingNum.map(rating => RatedPlace(p.name, fullAddress, rating))
+    ratingResponse.rating.map(rating => RatedPlace(p.name, fullAddress, rating))
   }
 
 }

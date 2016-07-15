@@ -22,7 +22,7 @@ class Gateway(val config: Config)
   val apiVersion = config.getString("api.version")
 
   val httpClient = new HttpClient(config)
-  val searchApi = new SearchService(httpClient.httpFlow, config)
+  val searchApi = new SearchService(httpClient, config)
 
   val routes = path("search" / Segment) { what =>
     get {
