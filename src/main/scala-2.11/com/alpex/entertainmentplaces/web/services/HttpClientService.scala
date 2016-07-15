@@ -1,11 +1,11 @@
 package com.alpex.entertainmentplaces.web.services
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.alpex.entertainmentplaces.web.HttpTransport.HttpFlow
+import com.alpex.entertainmentplaces.web.HttpClient
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
   * Created by alpex on 14/07/16.
@@ -14,6 +14,6 @@ import scala.concurrent.{ExecutionContext, Future}
 trait HttpClientService {
   implicit val materializer: Materializer
   implicit val executionContext: ExecutionContext
-  def flow: HttpFlow
-  def startRequest(request: HttpRequest): Future[HttpResponse] = Source.single(request).via(flow).runWith(Sink.head)
+  def client: HttpClient
+  def startRequest(request: HttpRequest): Future[HttpResponse] = client.startRequest(request)
 }

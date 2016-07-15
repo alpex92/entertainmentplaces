@@ -5,12 +5,12 @@ package com.alpex.entertainmentplaces.util
   */
 object NumUtils {
 
-  def parseFloat(floatStr: String): Option[Float] = {
+  def parseFloat(floatStr: String): Float = {
     try {
-      Some(floatStr.toFloat)
+      floatStr.toFloat
     } catch {
       case _: NumberFormatException =>
-        None
+        0
     }
   }
 }
