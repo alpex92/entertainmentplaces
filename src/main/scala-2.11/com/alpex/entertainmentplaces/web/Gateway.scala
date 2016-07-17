@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.util.{Logging, Configurable}
-import com.alpex.entertainmentplaces.web.services.SearchService
+import com.alpex.entertainmentplaces.web.services.{RatingService, PlacesService, SearchService}
 import com.alpex.entertainmentplaces.json.SprayJson
 import com.typesafe.config.Config
 
@@ -26,7 +26,10 @@ class Gateway(val config: Config)
   val apiVersion = config.getString("api.version")
 
   val httpClient = new HttpClient(config)
-  val searchApi = new SearchService(httpClient, config)
+
+  val placesApi = new PlacesService(httpClient, apiKey, apiVersion)
+  val ratingApi = new RatingService(httpClient, apiKey, apiVersion)
+  val searchApi = new SearchService(placesApi, ratingApi)
 
   val routes = path("search" / Segment) { what =>
     get {
