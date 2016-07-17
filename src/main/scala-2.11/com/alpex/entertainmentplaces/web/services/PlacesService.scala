@@ -4,7 +4,7 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.PlacesAPI
-import com.alpex.entertainmentplaces.model.{FailedResponse, Place, PlacesResponse}
+import com.alpex.entertainmentplaces.model.{ErrorResponse, Place, PlacesResponse}
 import com.alpex.entertainmentplaces.util.Logging
 import com.alpex.entertainmentplaces.web.{ApiUsage, HttpClient}
 import com.alpex.entertainmentplaces.json.SprayJson
@@ -26,9 +26,12 @@ class PlacesService(val client: HttpClient, val apiKey: String, val apiVersion: 
 
     logger.debug(s"Getting $what in $where ...")
 
-    startRequest(request).flatMap(processResponse[Either[FailedResponse, PlacesResponse]]).flatMap {
+    startRequest(request).flatMap(processResponse[Either[ErrorResponse, PlacesResponse]]).flatMap {
       case Left(err) =>
-        Future.failed(new Exception(s"${err.errorCode}: ${err.errorMessage}"))
+        processError(err, {
+          case "404" =>
+            Future.successful(List.empty[Place])
+        })
       case Right(placesResponse) =>
         logger.debug(s"Got ${placesResponse.result.size} $what in $where")
         Future.successful(placesResponse.result)

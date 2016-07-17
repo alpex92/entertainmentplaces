@@ -4,7 +4,7 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.RatingAPI
-import com.alpex.entertainmentplaces.model.{FailedResponse, Place, RatedPlace, RatingResponse}
+import com.alpex.entertainmentplaces.model.{ErrorResponse, Place, RatedPlace, RatingResponse}
 import com.alpex.entertainmentplaces.web.{ApiUsage, HttpClient}
 import com.alpex.entertainmentplaces.json.SprayJson
 
@@ -23,18 +23,19 @@ class RatingService(val client: HttpClient, val apiKey: String, val apiVersion: 
     val uri = Uri("/profile").withQuery(params)
     val request = RequestBuilding.Get(uri)
 
-    startRequest(request).flatMap(processResponse[Either[FailedResponse, RatingResponse]]).flatMap {
+    startRequest(request).flatMap(processResponse[Either[ErrorResponse, RatingResponse]]).flatMap {
       case Left(err) =>
-        Future.failed(new Exception(s"${err.errorCode}: ${err.errorMessage}"))
+        processError(err, {
+          case "404" =>
+            Future.successful(None)
+        })
       case Right(response) =>
         Future.successful(makeRatedPlace(p, response))
     }
   }
 
   protected def makeRatedPlace(p: Place, ratingResponse: RatingResponse) = {
-    val city = ratingResponse.cityName
-    val address = p.address
-    val fullAddress = s"$city, $address"
+    val fullAddress = s"${ratingResponse.cityName}, ${p.address}"
     ratingResponse.rating.map(rating => RatedPlace(p.name, fullAddress, rating))
   }
 

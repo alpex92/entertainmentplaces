@@ -7,7 +7,7 @@ package com.alpex.entertainmentplaces.model
 
 abstract class TwoGisResponse(responseCode: String)
 
-case class FailedResponse(responseCode: String, errorCode: String, errorMessage: String)
+case class ErrorResponse(responseCode: String, errorCode: String, errorMessage: String)
   extends TwoGisResponse(responseCode)
 
 case class PlacesResponse(responseCode: String, result: List[Place])
