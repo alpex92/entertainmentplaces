@@ -3,12 +3,11 @@ package com.alpex.entertainmentplaces.web.services
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.SearchAPI
 import com.alpex.entertainmentplaces.model.{Place, RatedPlace}
-import com.alpex.entertainmentplaces.util.{Logging, Configurable}
+import com.alpex.entertainmentplaces.util.{Configurable, Logging}
 import com.alpex.entertainmentplaces.web.{ApiUsage, HttpClient}
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
 
 /**
   * Created by alpex on 14/07/16.
@@ -19,6 +18,8 @@ class SearchService(val client: HttpClient, val config: Config)
   extends SearchAPI with ApiUsage with Configurable with Logging {
 
   val cities = List("Новосибирск", "Омск", "Томск", "Кемерово", "Новокузнецк")
+
+  val minOrdering = Ordering.by((_: RatedPlace).rating)
 
   val apiKey = config.getString("api.key")
   val apiVersion = config.getString("api.version")
@@ -31,7 +32,8 @@ class SearchService(val client: HttpClient, val config: Config)
   }
 
   protected def getRatedPlaces(what: String) = {
-    Future.sequence(cities.map(where => maxByRating(getRatedPlacesForCity(what, where))))
+    val cityFutures = cities.map(where => maxByRating(getRatedPlacesForCity(what, where)))
+    Future.sequence(cityFutures).map(_.flatten)
   }
 
   protected def getRatedPlacesForCity(what: String, city: String) = {
@@ -40,8 +42,8 @@ class SearchService(val client: HttpClient, val config: Config)
   }
 
   protected def getRatingForPlaces(places: Seq[Place]) = {
-    // Flatten to discard places without rating
-    Future.sequence(places.map(ratingApi.getRating)).map(_.flatten)
+    // Discard places without rating or with zero rating
+    Future.sequence(places.map(ratingApi.getRating)).map(_.flatten.filter(_.ratingNum > 0))
   }
 
   protected def sortByRating(supplier: => Future[Seq[RatedPlace]]) = {
@@ -49,7 +51,7 @@ class SearchService(val client: HttpClient, val config: Config)
   }
 
   protected def maxByRating(supplier: => Future[Seq[RatedPlace]]) = {
-    supplier.map(_.maxBy(_.rating))
+    supplier.map(_.reduceOption(minOrdering.max))
   }
 
 }
