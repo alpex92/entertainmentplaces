@@ -1,15 +1,12 @@
 package com.alpex.entertainmentplaces.web.services
 
 import akka.http.scaladsl.client.RequestBuilding
-import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.RatingAPI
-import com.alpex.entertainmentplaces.model.{Place, RatedPlace, RatingResponse}
-import com.alpex.entertainmentplaces.util.JsonSupport
-import com.alpex.entertainmentplaces.web.{HttpClient, ApiUsage}
-import com.alpex.entertainmentplaces.web.HttpTransport.HttpFlow
+import com.alpex.entertainmentplaces.model.{FailedResponse, Place, RatedPlace, RatingResponse}
+import com.alpex.entertainmentplaces.web.{ApiUsage, HttpClient}
+import com.alpex.entertainmentplaces.json.SprayJson
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class RatingService(val client: HttpClient, val apiKey: String, val apiVersion: String)
                    (implicit val executionContext: ExecutionContext, implicit val materializer: Materializer)
-  extends HttpClientService with ApiUsage with RatingAPI with JsonSupport {
+  extends HttpClientService with ApiUsage with RatingAPI with SprayJson {
 
   override def getRating(p: Place): Future[Option[RatedPlace]] = {
 
@@ -26,13 +23,12 @@ class RatingService(val client: HttpClient, val apiKey: String, val apiVersion: 
     val uri = Uri("/profile").withQuery(params)
     val request = RequestBuilding.Get(uri)
 
-    startRequest(request).flatMap(response => response.status match {
-      case OK =>
-        val ratingResponseFuture = Unmarshal(response.entity).to[RatingResponse]
-        ratingResponseFuture.map(r => makeRatedPlace(p, r))
-      case _ =>
-        Future.failed(new Exception("Ololo failed"))
-    })
+    startRequest(request).flatMap(processResponse[Either[FailedResponse, RatingResponse]]).flatMap {
+      case Left(err) =>
+        Future.failed(new Exception(s"${err.errorCode}: ${err.errorMessage}"))
+      case Right(response) =>
+        Future.successful(makeRatedPlace(p, response))
+    }
   }
 
   protected def makeRatedPlace(p: Place, ratingResponse: RatingResponse) = {
