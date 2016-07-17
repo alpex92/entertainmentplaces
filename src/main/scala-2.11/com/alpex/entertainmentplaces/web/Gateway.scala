@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
-import com.alpex.entertainmentplaces.util.Configurable
+import com.alpex.entertainmentplaces.util.{Logging, Configurable}
 import com.alpex.entertainmentplaces.web.services.SearchService
 import com.alpex.entertainmentplaces.json.SprayJson
 import com.typesafe.config.Config
@@ -20,7 +20,7 @@ class Gateway(val config: Config)
              (implicit val as: ActorSystem,
               implicit val ec: ExecutionContext,
               implicit val mt: Materializer)
-  extends Configurable with SprayJson {
+  extends Configurable with SprayJson with Logging {
 
   val apiKey = config.getString("api.key")
   val apiVersion = config.getString("api.version")
@@ -34,6 +34,7 @@ class Gateway(val config: Config)
         case Success(places) =>
           complete(places)
         case Failure(t) =>
+          logger.warn(s"search failed: ${t.getMessage}")
           complete(InternalServerError -> t.getMessage)
       }
     }
