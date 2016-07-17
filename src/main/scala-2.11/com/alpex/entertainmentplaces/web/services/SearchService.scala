@@ -28,34 +28,34 @@ class SearchService(val client: HttpClient, val config: Config)
   val ratingApi = new RatingService(client, apiKey, apiVersion)
 
   override def search(what: String): Future[Seq[RatedPlace]] = {
-    sortByRating(getRatedPlaces(what))
+    getRatedPlaces(what).map(sortByRating)
   }
 
   protected def getRatedPlaces(what: String) = {
-    val cityFutures = cities.map(where => maxByRating(discardZeroRating(getRatedPlacesForCity(what, where))))
+    val cityFutures = cities.map(where => getRatedPlacesForCity(what, where)
+      .map(discardZeroRating)
+      .map(maxByRating))
     Future.sequence(cityFutures).map(_.flatten)
   }
 
   protected def getRatedPlacesForCity(what: String, city: String) = {
-    val places = placesApi.getPlaces(what, city)
-    places.flatMap(getRatingForPlaces)
+    placesApi.getPlaces(what, city).flatMap(getRatingForPlaces)
   }
 
   protected def getRatingForPlaces(places: Seq[Place]) = {
-    // Discard places without rating or with zero rating
     Future.sequence(places.map(ratingApi.getRating))
   }
 
-  protected def discardZeroRating(future: Future[Seq[Option[RatedPlace]]]) = {
-    future.map(_.flatten.filter(_.ratingNum > 0))
+  protected def discardZeroRating(places: Seq[Option[RatedPlace]]) = {
+    places.flatten.filter(_.ratingNum > 0)
   }
 
-  protected def sortByRating(future: Future[Seq[RatedPlace]]) = {
-    future.map(_.sorted(ratedPlaceOrdering.reverse))
+  protected def sortByRating(places: Seq[RatedPlace]) = {
+    places.sorted(ratedPlaceOrdering.reverse)
   }
 
-  protected def maxByRating(future: Future[Seq[RatedPlace]]) = {
-    future.map(_.reduceOption(ratedPlaceOrdering.max))
+  protected def maxByRating(places: Seq[RatedPlace]) = {
+    places.reduceOption(ratedPlaceOrdering.max)
   }
 
 }
