@@ -3,11 +3,12 @@ package com.alpex.entertainmentplaces.web.services
 import akka.stream.Materializer
 import com.alpex.entertainmentplaces.api.SearchAPI
 import com.alpex.entertainmentplaces.model.{Place, RatedPlace}
-import com.alpex.entertainmentplaces.util.{Configurable, Logging}
+import com.alpex.entertainmentplaces.util.{Logging, Configurable}
 import com.alpex.entertainmentplaces.web.{ApiUsage, HttpClient}
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 /**
   * Created by alpex on 14/07/16.
