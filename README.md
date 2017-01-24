@@ -1,8 +1,2 @@
-Запуск:
-sbt run
+[Default URL:](http://127.0.0.1:8080/search/category)
 
-Тесты:
-sbt test
-
-URL по-умочанию:
-http://127.0.0.1:8080/search/сфера_деятельности
